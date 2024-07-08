@@ -7,7 +7,6 @@ from fastapi_tutorial.app import app
 
 # follow AAA architechture
 def test_must_return_ok():
-    ...
     client = TestClient(app)  # Arrange
 
     response = client.get('/')  # Act
