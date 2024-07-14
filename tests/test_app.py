@@ -38,7 +38,8 @@ def test_create_user(client: TestClient):
 # def test_update_users(client: TestClient):
 #     response = client.put(
 #         '/users/id',
-#         json={'username': 'test_username', 'email': 'test@email.com', 'id': 1},
+#         json={'username': 'test_username',
+# 'email': 'test@email.com', 'id': 1},
 #     )
 #     assert response.json() == {
 #         'username': 'test_username',
