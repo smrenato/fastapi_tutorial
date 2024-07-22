@@ -2,6 +2,8 @@ from http import HTTPStatus
 
 from fastapi.testclient import TestClient
 
+from fastapi_tutorial.schemas import UserPublic
+
 
 # follow AAA architechture
 def test_must_return_ok(client: TestClient):
@@ -22,3 +24,24 @@ def test_create_user(client: TestClient):
     )
 
     assert response.status_code == HTTPStatus.CREATED
+
+
+def test_read_users(client: TestClient):
+    response = client.get('/users/')
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'users': [],
+    }
+
+
+def test_read_users_with_user(client: TestClient, user):
+    response = client.get('/users/')
+    user_schema = UserPublic.model_validate(user).model_dump()
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'users': [
+            user_schema,
+        ],
+    }
