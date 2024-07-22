@@ -1,8 +1,17 @@
 from http import HTTPStatus
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
+from sqlalchemy import select
 
-from .schemas import Message, UserDB, UserList, UserPublic, UserSchema
+from fastapi_tutorial.database import get_session
+from fastapi_tutorial.models import User
+from fastapi_tutorial.schemas import (
+    Message,
+    UserDB,
+    UserList,
+    UserPublic,
+    UserSchema,
+)
 
 app = FastAPI()
 
@@ -20,10 +29,32 @@ def read_users():
 
 
 @app.post('/users/', response_model=UserPublic, status_code=HTTPStatus.CREATED)
-def create_user(user: UserSchema):
-    user_whit_id = UserDB(id=len(fakeDB) + 1, **user.model_dump())
-    fakeDB.append(user_whit_id)
-    return user_whit_id
+def create_user(user: UserSchema, session=Depends(get_session)):
+    db_user = session.scalar(
+        select(User).where(
+            (User.username == user.username) | (User.email == user.email)
+        )
+    )
+    if db_user is not None:
+        if db_user.username == user.username:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail='username already exists',
+            )
+        elif db_user.email == user.email:
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail='email already exists',
+            )
+    db_user = User(
+        username=user.username, email=user.email, password=user.password
+    )
+
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+
+    return db_user
 
 
 @app.put('/users/{user_id}', response_model=UserPublic)
