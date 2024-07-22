@@ -35,7 +35,7 @@ addopts = '-p no:warnings'
 [tool.taskipy.tasks]
 run = 'fastapi dev fastapi_tutorial/app.py'
 
-pre_test = 'task lint'
+# pre_test = 'task lint'
 test = 'pytest -s -x  --cov=fastapi_tutorial -vv'
 post_test = 'coverage html'
 

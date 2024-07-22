@@ -2,20 +2,17 @@ from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from fastapi_tutorial.database import get_session
 from fastapi_tutorial.models import User
 from fastapi_tutorial.schemas import (
-    Message,
-    UserDB,
     UserList,
     UserPublic,
     UserSchema,
 )
 
 app = FastAPI()
-
-fakeDB = []
 
 
 @app.get('/')
@@ -24,8 +21,9 @@ def hello_world():
 
 
 @app.get('/users/', response_model=UserList)
-def read_users():
-    return {'users': fakeDB}
+def read_users(session: Session = Depends(get_session), limit: int = 10):
+    users = session.scalars(select(User))
+    return {'users': users}
 
 
 @app.post('/users/', response_model=UserPublic, status_code=HTTPStatus.CREATED)
@@ -55,25 +53,3 @@ def create_user(user: UserSchema, session=Depends(get_session)):
     session.refresh(db_user)
 
     return db_user
-
-
-@app.put('/users/{user_id}', response_model=UserPublic)
-def update_user(user_id: int, user: UserSchema):
-    if user_id < 1 or user_id > len(fakeDB):
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
-        )
-
-    user_whit_id = UserDB(**user.model_dump(), id=user_id)
-    fakeDB[user_id - 1] = user_whit_id
-
-    return user_whit_id
-
-
-@app.delete('/users/{user_id}', response_model=Message)
-def delete_user(user_id: int):
-    if user_id < 1 or user_id > len(fakeDB):
-        raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
-        )
-    return {'message': 'user deleted'}
