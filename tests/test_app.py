@@ -45,3 +45,6 @@ def test_read_users_with_user(client: TestClient, user):
             user_schema,
         ],
     }
+
+
+def test_get_token(client, user, session): ...

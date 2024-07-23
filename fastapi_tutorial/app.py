@@ -1,15 +1,22 @@
 from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from fastapi_tutorial.database import get_session
 from fastapi_tutorial.models import User
 from fastapi_tutorial.schemas import (
+    Token,
     UserList,
     UserPublic,
     UserSchema,
+)
+from fastapi_tutorial.security import (
+    create_acess_token,
+    get_password_hash,
+    verify_password,
 )
 
 app = FastAPI()
@@ -45,7 +52,9 @@ def create_user(user: UserSchema, session=Depends(get_session)):
                 detail='email already exists',
             )
     db_user = User(
-        username=user.username, email=user.email, password=user.password
+        username=user.username,
+        email=user.email,
+        password=get_password_hash(user.password),
     )
 
     session.add(db_user)
@@ -53,3 +62,20 @@ def create_user(user: UserSchema, session=Depends(get_session)):
     session.refresh(db_user)
 
     return db_user
+
+
+@app.post('/token', response_model=Token)
+def login_for_acess_token(
+    session: Session = Depends(get_session),
+    form_data: OAuth2PasswordRequestForm = Depends(),
+):
+    user = session.scalar(select(User).where(User.email == form_data.username))
+
+    if not user or not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Incorrect email or password',
+        )
+
+    acess_token = create_acess_token(data_claims={'sub': user.email})
+    return {'acess_token': acess_token, 'token_type': 'Bearer'}
