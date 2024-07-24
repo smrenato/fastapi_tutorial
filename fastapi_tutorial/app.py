@@ -15,6 +15,7 @@ from fastapi_tutorial.schemas import (
 )
 from fastapi_tutorial.security import (
     create_acess_token,
+    get_current_user,
     get_password_hash,
     verify_password,
 )
@@ -28,7 +29,11 @@ def hello_world():
 
 
 @app.get('/users/', response_model=UserList)
-def read_users(session: Session = Depends(get_session), limit: int = 10):
+def read_users(
+    session: Session = Depends(get_session),
+    limit: int = 10,
+    current_user=Depends(dependency=get_current_user),
+):
     users = session.scalars(select(User))
     return {'users': users}
 
@@ -62,6 +67,27 @@ def create_user(user: UserSchema, session=Depends(get_session)):
     session.refresh(db_user)
 
     return db_user
+
+
+@app.put('/users/{user_id}', response_model=UserPublic)
+def update_user(
+    user_id: int,
+    user: UserSchema,
+    session: Session = Depends(get_session),
+    current_user=Depends(get_current_user),
+):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='Not enough permission',
+        )
+    current_user.email = user.email
+    current_user.username = user.username
+    current_user.password = get_password_hash(user.password)
+
+    session.commit()
+    session.refresh(current_user)
+    return current_user
 
 
 @app.post('/token', response_model=Token)

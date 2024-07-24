@@ -7,18 +7,7 @@ from sqlalchemy.pool import StaticPool
 from fastapi_tutorial.app import app
 from fastapi_tutorial.database import get_session
 from fastapi_tutorial.models import User, table_registry
-
-
-@pytest.fixture
-def client(session):
-    def get_overide_session():
-        return session
-
-    with TestClient(app) as client:
-        app.dependency_overrides[get_session] = get_overide_session
-        yield client
-
-    app.dependency_overrides.clear()
+from fastapi_tutorial.security import get_password_hash
 
 
 @pytest.fixture
@@ -38,12 +27,29 @@ def session():
 
 
 @pytest.fixture
+def client(session):
+    def get_overide_session():
+        return session
+
+    with TestClient(app) as client:
+        app.dependency_overrides[get_session] = get_overide_session
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
 def user(session):
+    passwd = '12345'
+
     user = User(
-        username='testclient',
-        password='12345',
-        email='testeemail@email.com',
+        username='test',
+        password=get_password_hash(password=passwd),
+        email='test@email.com',
     )
+
+    # atrribute only for test
+    user.clean_password = passwd  # pyright: ignore
     session.add(user)
     session.commit()
     session.refresh(user)

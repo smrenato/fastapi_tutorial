@@ -11,7 +11,7 @@ fastapi = "^0.111.0"
 sqlalchemy = "^2.0.31"
 pydantic-settings = "^2.3.4"
 alembic = "^1.13.2"
-pwdlib = {extras = ["argon2"], version = "^0.2.0"}
+pwdlib = { extras = ["argon2"], version = "^0.2.0" }
 python-multipart = "^0.0.9"
 pyjwt = "^2.8.0"
 
@@ -34,6 +34,9 @@ quote-style = 'single'
 [tool.pytest.ini_options]
 pythonpath = '.'
 addopts = '-p no:warnings'
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
 
 [tool.taskipy.tasks]
 run = 'fastapi dev fastapi_tutorial/app.py'

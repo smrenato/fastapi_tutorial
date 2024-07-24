@@ -47,4 +47,16 @@ def test_read_users_with_user(client: TestClient, user):
     }
 
 
-def test_get_token(client, user, session): ...
+def test_get_token(client, user, session):
+    response = client.post(
+        '/token',
+        data={
+            'username': user.email,
+            'password': user.clean_password,
+        },
+    )
+
+    token = response.json()
+    assert response.status_code == HTTPStatus.OK
+    assert token['token_type'] == 'Bearer'
+    assert 'acess_token' in token
